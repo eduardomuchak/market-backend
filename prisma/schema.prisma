@@ -1,0 +1,47 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+generator erd {
+  provider = "prisma-erd-generator"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Products {
+  id String          @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  categoryProducts CategoryProducts[]
+
+  @@map("products")
+}
+
+model Categories {
+  id String          @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  categoryProducts CategoryProducts[]
+
+  @@map("categories")
+  }
+
+model CategoryProducts {
+  id String          @id @default(uuid())
+
+  category_id String
+  product_id String
+
+  product Products @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  category Categories @relation(fields: [category_id], references: [id], onDelete: Cascade)
+
+  @@unique([product_id, category_id])
+  @@map("category_products")
+}
