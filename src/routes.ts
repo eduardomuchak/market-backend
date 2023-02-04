@@ -268,7 +268,7 @@ export async function appRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get('/product/:productId/toggle', async (request, reply) => {
+  app.patch('/product/:productId/toggle', async (request, reply) => {
     try {
       // Validate the request params with zod
       const productIdSchema = z.object({
