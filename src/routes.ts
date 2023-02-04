@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { prisma } from './lib/prisma';
+import { z } from 'zod';
 
 export async function appRoutes(app: FastifyInstance) {
   app.get('/', async () => {
@@ -47,6 +48,62 @@ export async function appRoutes(app: FastifyInstance) {
 
       return {
         total: productsCount || 0,
+        products: productsWithIdAndName || [],
+      };
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error(error.message);
+      }
+    }
+  });
+
+  // Get all Products by Category
+  app.get('/products/:categoryId', async (request) => {
+    try {
+      // Validate the request params with zod
+      const categoryIdSchema = z.object({
+        categoryId: z.string().uuid(),
+      });
+
+      const { categoryId } = categoryIdSchema.parse(request.params);
+
+      const [products, productsByCategoryCount] = await Promise.all([
+        // Find all products with the given category ID
+        prisma.products.findMany({
+          where: {
+            categoryProducts: {
+              some: {
+                category: {
+                  id: categoryId,
+                },
+              },
+            },
+          },
+        }),
+        // Count all products with the given category ID
+        prisma.products.count({
+          where: {
+            categoryProducts: {
+              some: {
+                category: {
+                  id: categoryId,
+                },
+              },
+            },
+          },
+        }),
+      ]);
+
+      // Map the products to only return the ID and Name
+      const productsWithIdAndName = products.map((product) => {
+        return {
+          id: product.id,
+          name: product.name,
+        };
+      });
+
+      return {
+        total: productsByCategoryCount || 0,
         products: productsWithIdAndName || [],
       };
     } catch (error) {
