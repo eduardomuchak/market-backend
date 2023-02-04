@@ -255,7 +255,7 @@ export async function appRoutes(app: FastifyInstance) {
         },
       });
 
-      reply.status(204).send({
+      reply.status(201).send({
         message: `Product with ID ${productId} deleted`,
       });
     } catch (error) {
