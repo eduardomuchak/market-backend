@@ -67,8 +67,8 @@ export async function appRoutes(app: FastifyInstance) {
 
       const { categoryId } = categoryIdSchema.parse(request.params);
 
+      // Find all products and count the products with the given category ID
       const [products, productsByCategoryCount] = await Promise.all([
-        // Find all products with the given category ID
         prisma.products.findMany({
           where: {
             categoryProducts: {
