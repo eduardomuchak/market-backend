@@ -35,7 +35,11 @@ export async function appRoutes(app: FastifyInstance) {
   // Get all Products
   app.get('/products', async () => {
     try {
-      const products = await prisma.products.findMany();
+      const products = await prisma.products.findMany({
+        where: {
+          isDeleted: false,
+        },
+      });
 
       const productsWithIdNameAndStatus = products.map((product) => {
         return {
@@ -45,7 +49,11 @@ export async function appRoutes(app: FastifyInstance) {
         };
       });
 
-      const productsCount = await prisma.products.count();
+      const productsCount = await prisma.products.count({
+        where: {
+          isDeleted: false,
+        },
+      });
 
       return {
         total: productsCount || 0,
@@ -223,6 +231,86 @@ export async function appRoutes(app: FastifyInstance) {
     } catch (error) {
       if (error instanceof Error) {
         console.error(error.message);
+      }
+    }
+  });
+
+  app.delete('/product/:productId', async (request, reply) => {
+    try {
+      // Validate the request params with zod
+      const productIdSchema = z.object({
+        productId: z.string().uuid(),
+      });
+
+      const { productId } = productIdSchema.parse(request.params);
+
+      // Logically delete the product using Prisma ORM
+      await prisma.products.update({
+        where: {
+          id: productId,
+        },
+        data: {
+          deletedAt: new Date(),
+          isDeleted: true,
+        },
+      });
+
+      reply.status(204).send({
+        message: `Product with ID ${productId} deleted`,
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error(error.message);
+        reply.status(500).send({
+          error: error.message,
+        });
+      }
+    }
+  });
+
+  app.get('/product/:productId/toggle', async (request, reply) => {
+    try {
+      // Validate the request params with zod
+      const productIdSchema = z.object({
+        productId: z.string().uuid(),
+      });
+
+      const { productId } = productIdSchema.parse(request.params);
+
+      // Get the current state of the "checked" field for the product
+      const product = await prisma.products.findUnique({
+        where: {
+          id: productId,
+        },
+      });
+
+      // Toggle the "checked" field
+      const updatedProduct = await prisma.products.update({
+        where: {
+          id: productId,
+        },
+        data: {
+          checked: !product?.checked,
+        },
+      });
+
+      // Get only the id, name and checked fields
+      const productWithIdNameAndChecked = {
+        id: updatedProduct.id,
+        name: updatedProduct.name,
+        checked: updatedProduct.checked,
+      };
+
+      // Return the updated product
+      reply.status(200).send({
+        product: productWithIdNameAndChecked,
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error(error.message);
+        reply.status(500).send({
+          error: error.message,
+        });
       }
     }
   });
