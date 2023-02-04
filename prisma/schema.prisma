@@ -14,9 +14,11 @@ datasource db {
 model Products {
   id               String             @id @default(uuid())
   name             String
+  checked          Boolean            @default(false)
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
   deletedAt        DateTime?
+  isDeleted        Boolean            @default(false)
   categoryProducts CategoryProducts[]
 
   @@map("products")
@@ -28,6 +30,7 @@ model Categories {
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
   deletedAt        DateTime?
+  isDeleted        Boolean            @default(false)
   categoryProducts CategoryProducts[]
 
   @@map("categories")

@@ -3,12 +3,12 @@ import { prisma } from './lib/prisma';
 import { z } from 'zod';
 
 export async function appRoutes(app: FastifyInstance) {
-  app.get('/', async () => {
-    return { message: 'Hello World!' };
+  app.get('/', async (_request, reply) => {
+    reply.status(200).send({ message: 'Hello World!' });
   });
 
   // Get all Categories
-  app.get('/categories', async () => {
+  app.get('/categories', async (_request, reply) => {
     try {
       const categories = await prisma.categories.findMany();
 
@@ -21,10 +21,10 @@ export async function appRoutes(app: FastifyInstance) {
 
       const categoriesCount = await prisma.categories.count();
 
-      return {
+      reply.status(200).send({
         total: categoriesCount || 0,
         categories: categoriesWithIdAndName || [],
-      };
+      });
     } catch (error) {
       if (error instanceof Error) {
         console.error(error.message);
@@ -37,10 +37,11 @@ export async function appRoutes(app: FastifyInstance) {
     try {
       const products = await prisma.products.findMany();
 
-      const productsWithIdAndName = products.map((product) => {
+      const productsWithIdNameAndStatus = products.map((product) => {
         return {
           id: product.id,
           name: product.name,
+          checked: product.checked,
         };
       });
 
@@ -48,7 +49,7 @@ export async function appRoutes(app: FastifyInstance) {
 
       return {
         total: productsCount || 0,
-        products: productsWithIdAndName || [],
+        products: productsWithIdNameAndStatus || [],
       };
     } catch (error) {
       if (error instanceof Error) {
@@ -58,7 +59,7 @@ export async function appRoutes(app: FastifyInstance) {
   });
 
   // Get all Products by Category
-  app.get('/products/:categoryId', async (request) => {
+  app.get('/products/:categoryId', async (request, reply) => {
     try {
       // Validate the request params with zod
       const categoryIdSchema = z.object({
@@ -102,10 +103,10 @@ export async function appRoutes(app: FastifyInstance) {
         };
       });
 
-      return {
+      reply.status(200).send({
         total: productsByCategoryCount || 0,
         products: productsWithIdAndName || [],
-      };
+      });
     } catch (error) {
       if (error instanceof Error) {
         console.error(error.message);
@@ -114,7 +115,7 @@ export async function appRoutes(app: FastifyInstance) {
   });
 
   // Post a new Product
-  app.post('/product', async (request) => {
+  app.post('/product', async (request, reply) => {
     try {
       // Validate the request body with zod
       const productSchema = z.object({
@@ -143,7 +144,82 @@ export async function appRoutes(app: FastifyInstance) {
       });
 
       // Return the created product
-      return { productCreated: product };
+      reply.status(201).send({ productCreated: product });
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error(error.message);
+      }
+    }
+  });
+
+  // Patch a Product
+  app.patch('/product/:productId', async (request, reply) => {
+    try {
+      // Validate the request params and body
+      const productIdSchema = z.object({
+        productId: z.string().uuid(),
+      });
+
+      const productDataSchema = z.object({
+        name: z.string().optional(),
+        categoryIds: z.array(z.string().uuid()).optional(),
+      });
+
+      const { productId } = productIdSchema.parse(request.params);
+      const productData = productDataSchema.parse(request.body);
+
+      // Retrieve the product with the given ID using Prisma ORM
+      const product = await prisma.products.findFirst({
+        where: {
+          id: productId,
+        },
+      });
+
+      // Make sure the product exists
+      if (!product) {
+        reply.status(404).send({
+          error: `Product with ID ${productId} not found`,
+        });
+        return;
+      }
+
+      // Update the product with the new data
+      const updatedProduct = await prisma.products.update({
+        where: {
+          id: productId,
+        },
+        data: {
+          name: productData.name || product.name,
+        },
+      });
+
+      // Update the categories for the product
+      if (productData.categoryIds) {
+        // Delete all existing categoryProduct relationships for the product
+        await prisma.categoryProducts.deleteMany({
+          where: {
+            product_id: productId,
+          },
+        });
+
+        // Create new categoryProduct relationships for the product
+        for (const categoryId of productData.categoryIds) {
+          await prisma.categoryProducts.create({
+            data: {
+              product_id: productId,
+              category_id: categoryId,
+            },
+          });
+        }
+      }
+
+      // Return the updated product to the client
+      reply.send({
+        updatedProduct: {
+          id: updatedProduct.id,
+          name: updatedProduct.name,
+        },
+      });
     } catch (error) {
       if (error instanceof Error) {
         console.error(error.message);
