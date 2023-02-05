@@ -12,13 +12,30 @@ export default function productsRoutes(app: FastifyInstance) {
         },
       });
 
+      const productCategories = await prisma.categoryProducts.findMany({
+        where: {
+          product_id: {
+            in: products.map((product) => product.id),
+          },
+        },
+      });
+
       const productsWithIdNameAndStatus = products.map((product) => {
         return {
           id: product.id,
           name: product.name,
           checked: product.checked,
+          categoriesIds: productCategories
+            .filter((category) => {
+              return category.product_id === product.id;
+            })
+            .map((category) => {
+              return category.category_id;
+            }),
         };
       });
+
+      console.log(productsWithIdNameAndStatus[4]);
 
       const productsCount = await prisma.products.count({
         where: {
