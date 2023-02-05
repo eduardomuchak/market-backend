@@ -128,17 +128,17 @@ export async function appRoutes(app: FastifyInstance) {
       // Validate the request body with zod
       const productSchema = z.object({
         name: z.string(),
-        categoryIds: z.array(z.string().uuid()),
+        categoriesIds: z.array(z.string().uuid()),
       });
 
-      const { name, categoryIds } = productSchema.parse(request.body);
+      const { name, categoriesIds } = productSchema.parse(request.body);
 
       // Create the product using Prisma ORM
       const product = await prisma.products.create({
         data: {
           name,
           categoryProducts: {
-            create: categoryIds.map((categoryId) => {
+            create: categoriesIds.map((categoryId) => {
               return {
                 category: {
                   connect: {
