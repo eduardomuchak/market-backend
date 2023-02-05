@@ -133,7 +133,6 @@ export async function appRoutes(app: FastifyInstance) {
 
       const { name, categoriesIds } = productSchema.parse(request.body);
 
-      // Create the product using Prisma ORM
       const product = await prisma.products.create({
         data: {
           name,
