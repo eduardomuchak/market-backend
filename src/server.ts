@@ -12,8 +12,8 @@ app.register(appRoutes);
 
 app
   .listen({
-    port: 8080,
+    port: 5432,
   })
   .then(() => {
-    console.log(`HTTP Server running on Port: 8080`);
+    console.log(`HTTP Server running on Port: 5432`);
   });

@@ -35,8 +35,6 @@ export default function productsRoutes(app: FastifyInstance) {
         };
       });
 
-      console.log(productsWithIdNameAndStatus[4]);
-
       const productsCount = await prisma.products.count({
         where: {
           isDeleted: false,
