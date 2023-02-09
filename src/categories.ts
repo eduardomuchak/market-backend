@@ -12,10 +12,11 @@ export default function categoriesRoutes(app: FastifyInstance) {
         },
       });
 
-      const categoriesWithIdAndName = categories.map((category) => {
+      const categoriesWithIdNameAndIcon = categories.map((category) => {
         return {
           id: category.id,
           name: category.name,
+          icon: category.icon,
         };
       });
 
@@ -23,7 +24,7 @@ export default function categoriesRoutes(app: FastifyInstance) {
 
       reply.status(200).send({
         total: categoriesCount || 0,
-        categories: categoriesWithIdAndName || [],
+        categories: categoriesWithIdNameAndIcon || [],
       });
     } catch (error) {
       if (error instanceof Error) {
@@ -37,13 +38,15 @@ export default function categoriesRoutes(app: FastifyInstance) {
     try {
       const categorySchema = z.object({
         name: z.string(),
+        icon: z.string(),
       });
 
-      const { name } = categorySchema.parse(request.body);
+      const { name, icon } = categorySchema.parse(request.body);
 
       const category = await prisma.categories.create({
         data: {
           name,
+          icon,
         },
       });
 

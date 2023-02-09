@@ -20,6 +20,7 @@ async function main() {
   const category1 = await prisma.categories.create({
     data: {
       name: 'Bebidas',
+      icon: 'Bebidas',
       createdAt: new Date(),
     },
   });
@@ -27,6 +28,7 @@ async function main() {
   const category2 = await prisma.categories.create({
     data: {
       name: 'Laticínios',
+      icon: 'Laticinios',
       createdAt: new Date(),
     },
   });
@@ -34,6 +36,7 @@ async function main() {
   const category3 = await prisma.categories.create({
     data: {
       name: 'Grãos e Cereais',
+      icon: 'Grãos e Cereais',
       createdAt: new Date(),
     },
   });

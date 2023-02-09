@@ -27,6 +27,7 @@ model Products {
 model Categories {
   id               String             @id @default(uuid())
   name             String
+  icon             String             @default(" ")
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
   deletedAt        DateTime?
